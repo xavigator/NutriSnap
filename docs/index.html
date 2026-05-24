@@ -33,9 +33,10 @@
     background: var(--bg);
     color: var(--text);
     font-family: 'DM Sans', sans-serif;
-    font-size: 16px;
+    font-size: 18px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
     overflow: hidden;
   }
 
@@ -70,7 +71,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
+    font-size: 15px;
     color: var(--muted);
     background: var(--surface);
     padding: 6px 12px;
@@ -140,13 +141,13 @@
   }
 
   .upload-hint {
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 500;
     color: var(--text);
     text-align: center;
   }
   .upload-sub {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--muted);
     text-align: center;
   }
@@ -161,7 +162,7 @@
     color: #0a0a0a;
     font-family: 'Syne', sans-serif;
     font-weight: 700;
-    font-size: 16px;
+    font-size: 18px;
     letter-spacing: 0.3px;
     border: none;
     cursor: pointer;
@@ -195,7 +196,7 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading-text {
-    font-size: 15px; color: var(--muted);
+    font-size: 17px; color: var(--muted);
     animation: pulse 1.5s ease-in-out infinite;
   }
   @keyframes pulse { 0%,100%{opacity:.6} 50%{opacity:1} }
@@ -230,12 +231,12 @@
     line-height: 1.2;
   }
   .food-portion {
-    font-size: 13px;
+    font-size: 15px;
     color: rgba(200,240,100,0.6);
     margin-top: 4px;
   }
   .confidence-pill {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     padding: 5px 10px;
     border-radius: 99px;
@@ -275,8 +276,8 @@
 
   .macro-row { display: flex; flex-direction: column; gap: 4px; }
   .macro-header { display: flex; justify-content: space-between; align-items: baseline; }
-  .macro-name { font-size: 12px; color: var(--muted); font-weight: 500; }
-  .macro-val { font-size: 14px; font-weight: 600; color: var(--text); }
+  .macro-name { font-size: 14px; color: var(--muted); font-weight: 500; }
+  .macro-val { font-size: 16px; font-weight: 600; color: var(--text); }
   .macro-bar-track {
     height: 5px; border-radius: 99px;
     background: var(--surface2);
@@ -293,7 +294,7 @@
 
   .section-label {
     font-family: 'Syne', sans-serif;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--muted);
     letter-spacing: 1px;
@@ -317,7 +318,7 @@
   .nutrient-tile:active { border-color: rgba(255,255,255,0.18); }
 
   .nutrient-tile-label {
-    font-size: 11px;
+    font-size: 13px;
     color: var(--muted);
     margin-bottom: 6px;
     font-weight: 500;
@@ -330,13 +331,13 @@
     line-height: 1;
   }
   .nutrient-tile-unit {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 400;
     color: var(--muted);
     margin-left: 2px;
   }
   .nutrient-tile-dv {
-    font-size: 11px;
+    font-size: 13px;
     color: var(--muted);
     margin-top: 4px;
   }
@@ -359,7 +360,7 @@
     font-size: 36px;
     font-weight: 800;
   }
-  .health-score-label { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .health-score-label { font-size: 15px; color: var(--muted); margin-top: 2px; }
   .health-track {
     height: 8px;
     border-radius: 99px;
@@ -375,7 +376,7 @@
   }
   .health-notes { display: flex; flex-direction: column; gap: 8px; }
   .health-note {
-    font-size: 13px;
+    font-size: 15px;
     color: var(--muted);
     display: flex;
     gap: 8px;
@@ -402,7 +403,7 @@
     background: var(--surface);
     color: var(--text);
     font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     border: 1px solid var(--border);
     cursor: pointer;
@@ -440,7 +441,7 @@
     border-radius: 14px;
     padding: 14px 16px;
     border: 1px solid var(--border);
-    font-size: 13px;
+    font-size: 15px;
     color: var(--muted);
   }
   .tip-icon {
