@@ -434,17 +434,23 @@ function getUserId() {
 }
 
 async function supaFetch(path, opts = {}) {
+  const { headers: extraHeaders, ...restOpts } = opts;
   const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
-    ...opts,
+    ...restOpts,
     headers: {
       'Content-Type': 'application/json',
       'apikey': SUPA_KEY,
       'Authorization': 'Bearer ' + SUPA_KEY,
-      ...(opts.headers || {})
+      'Prefer': 'return=minimal',
+      ...(extraHeaders || {})
     }
   });
-  if (!res.ok) { const e = await res.text(); throw new Error(e); }
-  if (res.status === 204) return null;
+  if (!res.ok) {
+    const e = await res.text();
+    console.error('Supabase error:', res.status, e);
+    throw new Error(e);
+  }
+  if (res.status === 204 || res.status === 201) return null;
   return res.json();
 }
 
@@ -1004,10 +1010,14 @@ async function addManualMeal(idx, query) {
     time: new Date().toLocaleTimeString('ca',{hour:'2-digit',minute:'2-digit'}),
     name: f.name, calories: f.cal, protein_g: f.p, carbs_g: f.c, fat_g: f.f, imageBase64: null
   };
-  await saveMeal(meal);
-  document.getElementById('searchInput').value = '';
-  document.getElementById('searchResults').innerHTML = '';
-  renderDaily();
+  try {
+    await saveMeal(meal);
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchResults').innerHTML = '';
+    renderDaily();
+  } catch(e) {
+    alert('Error desant: ' + e.message);
+  }
 }
 
 // ═══════════════════════════════════════
