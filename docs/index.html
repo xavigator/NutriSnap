@@ -36,7 +36,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .screen.active{display:flex}
 
 /* HEADER */
-header{padding:calc(var(--safe-top)+16px) 20px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--bg);z-index:10}
+header{padding:calc(var(--safe-top)+22px) 20px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--bg);z-index:10}
 .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:25px;letter-spacing:-.5px}
 .logo span{color:var(--accent)}
 .header-badge{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);background:var(--surface);padding:6px 12px;border-radius:99px;border:1px solid var(--border)}
@@ -128,7 +128,7 @@ input[type="file"]{display:none}
 .tip-icon{width:34px;height:34px;border-radius:10px;background:var(--surface2);display:grid;place-items:center;font-size:16px;flex-shrink:0}
 
 /* ── DAILY SCREEN ── */
-.daily-header{padding:calc(var(--safe-top)+16px) 20px 18px;flex-shrink:0;background:var(--bg)}
+.daily-header{padding:calc(var(--safe-top)+22px) 20px 18px;flex-shrink:0;background:var(--bg)}
 .daily-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:800}
 .daily-date{font-size:15px;color:var(--muted);margin-top:2px}
 
@@ -999,19 +999,25 @@ document.getElementById('dailyDate').textContent = new Date().toLocaleDateString
 // PWA SAFE AREA FIX
 (function() {
   const isPWA = window.navigator.standalone === true;
-  // Mostra l'alcada per debug (elimina quan funcioni)
-  console.log('Screen height:', window.screen.height, 'PWA:', isPWA);
   if (!isPWA) return;
-  const h = window.screen.height;
-  let top = 59;
-  if (h >= 956) top = 62;       // iPhone 16 Pro Max
-  else if (h >= 932) top = 62;  // iPhone 15 Pro Max / 14 Pro Max
-  else if (h >= 874) top = 59;  // iPhone 16 Pro
-  else if (h >= 852) top = 59;  // iPhone 15 Pro
-  else if (h >= 844) top = 47;  // iPhone 12/13/14
-  else if (h >= 812) top = 44;  // iPhone X/XS/11 Pro
-  else if (h >= 780) top = 34;  // iPhone SE 3rd gen
-  else top = 20;
+  // Read the real safe area from a test element
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;top:env(safe-area-inset-top,0px);height:0;width:0;visibility:hidden';
+  document.body.appendChild(probe);
+  const realTop = parseInt(getComputedStyle(probe).top) || 0;
+  document.body.removeChild(probe);
+  // Use real value if non-zero, otherwise fall back to model detection
+  let top = realTop > 0 ? realTop : 0;
+  if (top < 10) {
+    const h = window.screen.height;
+    if (h >= 956) top = 59;       // iPhone 16 Pro Max
+    else if (h >= 932) top = 59;  // iPhone 15 Pro Max
+    else if (h >= 874) top = 59;  // iPhone 16 Pro
+    else if (h >= 852) top = 59;  // iPhone 15 Pro
+    else if (h >= 844) top = 47;  // iPhone 12/13/14
+    else if (h >= 812) top = 44;  // iPhone X/XS/11 Pro
+    else top = 20;
+  }
   document.documentElement.style.setProperty('--safe-top', top + 'px');
   document.documentElement.style.setProperty('--safe-bottom', '34px');
 })();
