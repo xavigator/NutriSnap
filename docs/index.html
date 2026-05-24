@@ -997,19 +997,21 @@ async function clearAllData() {
 document.getElementById('dailyDate').textContent = new Date().toLocaleDateString('ca',{weekday:'long',day:'numeric',month:'long'});
 
 // PWA SAFE AREA FIX
-// En mode PWA l'env(safe-area-inset-top) retorna 0 a Safari
-// Detectem si es PWA i apliquem el padding correcte manualment
 (function() {
   const isPWA = window.navigator.standalone === true;
+  // Mostra l'alcada per debug (elimina quan funcioni)
+  console.log('Screen height:', window.screen.height, 'PWA:', isPWA);
   if (!isPWA) return;
   const h = window.screen.height;
-  let top = 54;
-  if (h >= 932) top = 59;       // iPhone 14/15 Pro Max
+  let top = 59;
+  if (h >= 956) top = 62;       // iPhone 16 Pro Max
+  else if (h >= 932) top = 62;  // iPhone 15 Pro Max / 14 Pro Max
+  else if (h >= 874) top = 59;  // iPhone 16 Pro
   else if (h >= 852) top = 59;  // iPhone 15 Pro
   else if (h >= 844) top = 47;  // iPhone 12/13/14
   else if (h >= 812) top = 44;  // iPhone X/XS/11 Pro
   else if (h >= 780) top = 34;  // iPhone SE 3rd gen
-  else top = 20;                // sense notch
+  else top = 20;
   document.documentElement.style.setProperty('--safe-top', top + 'px');
   document.documentElement.style.setProperty('--safe-bottom', '34px');
 })();
