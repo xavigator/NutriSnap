@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NutriSnap">
+<meta name="theme-color" content="#0a0a0a">
+<title>NutriSnap — Analitzador Nutricional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1e1e1e;
+    --border: rgba(255,255,255,0.08);
+    --text: #f0ede8;
+    --muted: rgba(240,237,232,0.45);
+    --accent: #c8f064;
+    --accent2: #64c8f0;
+    --warn: #f0a064;
+    --radius: 20px;
+    --safe-top: env(safe-area-inset-top, 44px);
+    --safe-bottom: env(safe-area-inset-bottom, 20px);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  #app {
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  header {
+    padding: calc(var(--safe-top) + 12px) 24px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    background: linear-gradient(to bottom, var(--bg) 60%, transparent);
+    position: relative;
+    z-index: 10;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+
+  .streak {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    background: var(--surface);
+    padding: 6px 12px;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+  }
+  .streak-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+  }
+
+  main {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 20px calc(var(--safe-bottom) + 100px);
+    scroll-behavior: smooth;
+  }
+
+  .upload-zone {
+    border: 1.5px dashed rgba(200,240,100,0.3);
+    border-radius: var(--radius);
+    background: var(--surface);
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .upload-zone:active { transform: scale(0.98); border-color: var(--accent); }
+  .upload-zone.has-image { border-style: solid; border-color: rgba(200,240,100,0.5); min-height: 260px; }
+
+  .upload-zone img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    border-radius: calc(var(--radius) - 2px);
+    opacity: 0.85;
+  }
+
+  .upload-overlay {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 10px;
+    background: rgba(10,10,10,0.55);
+    backdrop-filter: blur(6px);
+    padding: 16px 24px;
+    border-radius: 14px;
+  }
+
+  .upload-icon {
+    width: 52px; height: 52px;
+    border-radius: 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: grid; place-items: center;
+    font-size: 22px;
+  }
+
+  .upload-hint {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    text-align: center;
+  }
+  .upload-sub {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  input[type="file"] { display: none; }
+
+  .btn-analyze {
+    width: 100%;
+    padding: 17px;
+    border-radius: 16px;
+    background: var(--accent);
+    color: #0a0a0a;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.3px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+  .btn-analyze:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+  .btn-analyze:not(:disabled):active { transform: scale(0.97); background: #b8e054; }
+
+  .loading-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 32px 24px;
+    text-align: center;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+    display: none;
+  }
+  .loading-card.show { display: block; }
+  .loading-spinner {
+    width: 40px; height: 40px;
+    border: 2.5px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-size: 15px; color: var(--muted);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:.6} 50%{opacity:1} }
+
+  .result-section {
+    display: none;
+    flex-direction: column;
+    gap: 16px;
+    animation: fadeUp 0.4s ease forwards;
+  }
+  .result-section.show { display: flex; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .food-name-card {
+    background: linear-gradient(135deg, #1a2a0a 0%, #0f1a0f 100%);
+    border: 1px solid rgba(200,240,100,0.2);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .food-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.2;
+  }
+  .food-portion {
+    font-size: 13px;
+    color: rgba(200,240,100,0.6);
+    margin-top: 4px;
+  }
+  .confidence-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 99px;
+    background: rgba(200,240,100,0.12);
+    color: var(--accent);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .calorie-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .ring-wrap { position: relative; flex-shrink: 0; }
+  .ring-wrap svg { display: block; }
+  .ring-center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .ring-kcal {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--text);
+  }
+  .ring-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .macro-bars { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+
+  .macro-row { display: flex; flex-direction: column; gap: 4px; }
+  .macro-header { display: flex; justify-content: space-between; align-items: baseline; }
+  .macro-name { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .macro-val { font-size: 14px; font-weight: 600; color: var(--text); }
+  .macro-bar-track {
+    height: 5px; border-radius: 99px;
+    background: var(--surface2);
+    overflow: hidden;
+  }
+  .macro-bar-fill {
+    height: 100%; border-radius: 99px;
+    transition: width 1s cubic-bezier(.4,0,.2,1);
+    width: 0%;
+  }
+  .bar-protein { background: #64c8f0; }
+  .bar-carbs   { background: var(--accent); }
+  .bar-fat     { background: var(--warn); }
+
+  .section-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .nutrient-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .nutrient-tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    transition: border-color 0.2s;
+  }
+  .nutrient-tile:active { border-color: rgba(255,255,255,0.18); }
+
+  .nutrient-tile-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .nutrient-tile-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+  }
+  .nutrient-tile-unit {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-left: 2px;
+  }
+  .nutrient-tile-dv {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .nutrient-tile-dv span { color: var(--accent2); font-weight: 600; }
+
+  .health-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+  }
+  .health-score-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .health-score-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+  }
+  .health-score-label { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .health-track {
+    height: 8px;
+    border-radius: 99px;
+    background: var(--surface2);
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .health-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    width: 0%;
+  }
+  .health-notes { display: flex; flex-direction: column; gap: 8px; }
+  .health-note {
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    line-height: 1.4;
+  }
+  .note-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+
+  .bottom-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 12px 20px calc(var(--safe-bottom) + 10px);
+    background: linear-gradient(to top, var(--bg) 70%, transparent);
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .btn-secondary {
+    flex: 1;
+    padding: 14px;
+    border-radius: 14px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn-secondary:active { background: var(--surface2); transform: scale(0.97); }
+
+  .error-card {
+    background: rgba(240,100,100,0.08);
+    border: 1px solid rgba(240,100,100,0.2);
+    border-radius: var(--radius);
+    padding: 20px;
+    color: #f08080;
+    font-size: 14px;
+    display: none;
+    line-height: 1.5;
+  }
+  .error-card.show { display: block; }
+
+  .empty-tips {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .tip-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .tip-icon {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    background: var(--surface2);
+    display: grid; place-items: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">Nutri<span>Snap</span></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+      <div class="streak">
+        <div class="streak-dot"></div>
+        Basat en IA
+      </div>
+      <div style="font-size:11px;color:var(--muted)">Creat per Xavi Coll</div>
+    </div>
+  </header>
+
+  <main id="main-scroll">
+
+    <!-- Zona de càrrega -->
+    <label class="upload-zone" id="uploadZone" for="fileInput">
+      <img id="previewImg" style="display:none" alt="Previsualització del menjar">
+      <div class="upload-overlay" id="uploadOverlay">
+        <div class="upload-icon">📷</div>
+        <div class="upload-hint">Fes o puja una foto</div>
+        <div class="upload-sub">Fotografia el teu àpat per analitzar-lo</div>
+      </div>
+    </label>
+    <input type="file" id="fileInput" accept="image/*" capture="environment">
+
+    <!-- Botó d'anàlisi -->
+    <button class="btn-analyze" id="analyzeBtn" disabled>
+      <span>✦</span> Analitza la nutrició
+    </button>
+
+    <!-- Consells (ocults després del primer resultat) -->
+    <div class="empty-tips" id="emptyTips">
+      <div class="section-label">Com funciona</div>
+      <div class="tip-row"><div class="tip-icon">🍽️</div>Fes una foto clara del teu àpat o berenar</div>
+      <div class="tip-row"><div class="tip-icon">🤖</div>La IA identifica cada ingredient automàticament</div>
+      <div class="tip-row"><div class="tip-icon">📊</div>Obté calories, macros, vitamines i minerals</div>
+      <div class="tip-row"><div class="tip-icon">💚</div>Rep una puntuació de salut personalitzada</div>
+    </div>
+
+    <!-- Estat de càrrega -->
+    <div class="loading-card" id="loadingCard">
+      <div class="loading-spinner"></div>
+      <div class="loading-text" id="loadingText">Identificant el teu menjar…</div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-card" id="errorCard"></div>
+
+    <!-- Resultats -->
+    <div class="result-section" id="resultSection">
+
+      <!-- Nom del menjar -->
+      <div class="food-name-card" id="foodNameCard">
+        <div>
+          <div class="food-name" id="foodName">—</div>
+          <div class="food-portion" id="foodPortion"></div>
+        </div>
+        <div class="confidence-pill" id="confidencePill"></div>
+      </div>
+
+      <!-- Calories + macros -->
+      <div class="calorie-card">
+        <div class="ring-wrap">
+          <svg width="100" height="100" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="var(--surface2)" stroke-width="8"/>
+            <circle id="calRing" cx="50" cy="50" r="40" fill="none"
+              stroke="var(--accent)" stroke-width="8"
+              stroke-linecap="round"
+              stroke-dasharray="251.2"
+              stroke-dashoffset="251.2"
+              transform="rotate(-90 50 50)"
+              style="transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-kcal" id="kcalNum">—</div>
+            <div class="ring-label">kcal</div>
+          </div>
+        </div>
+        <div class="macro-bars">
+          <div class="macro-row">
+            <div class="macro-header">
+              <span class="macro-name">Proteïnes</span>
+              <span class="macro-val" id="proteinVal">—</span>
+            </div>
+            <div class="macro-bar-track">
+              <div class="macro-bar-fill bar-protein" id="proteinBar"></div>
+            </div>
+          </div>
+          <div class="macro-row">
+            <div class="macro-header">
+              <span class="macro-name">Hidrats</span>
+              <span class="macro-val" id="carbsVal">—</span>
+            </div>
+            <div class="macro-bar-track">
+              <div class="macro-bar-fill bar-carbs" id="carbsBar"></div>
+            </div>
+          </div>
+          <div class="macro-row">
+            <div class="macro-header">
+              <span class="macro-name">Greixos</span>
+              <span class="macro-val" id="fatVal">—</span>
+            </div>
+            <div class="macro-bar-track">
+              <div class="macro-bar-fill bar-fat" id="fatBar"></div>
+            </div>
+          </div>
+          <div class="macro-row">
+            <div class="macro-header">
+              <span class="macro-name">Fibra</span>
+              <span class="macro-val" id="fiberVal">—</span>
+            </div>
+            <div class="macro-bar-track">
+              <div class="macro-bar-fill" id="fiberBar" style="background:#a064f0"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nutrients detallats -->
+      <div class="section-label">Nutrients detallats</div>
+      <div class="nutrient-grid" id="nutrientGrid"></div>
+
+      <!-- Puntuació de salut -->
+      <div class="health-card" id="healthCard">
+        <div class="health-score-row">
+          <div>
+            <div class="health-score-num" id="healthScoreNum">—</div>
+            <div class="health-score-label" id="healthScoreLabel">Puntuació de salut</div>
+          </div>
+        </div>
+        <div class="health-track">
+          <div class="health-fill" id="healthFill"></div>
+        </div>
+        <div class="health-notes" id="healthNotes"></div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <div class="bottom-bar" id="bottomBar">
+    <button class="btn-secondary" id="retakeBtn" style="display:none" onclick="retake()">
+      📷 Nova foto
+    </button>
+    <button class="btn-secondary" id="shareBtn" style="display:none" onclick="shareResult()">
+      ↑ Compartir
+    </button>
+  </div>
+</div>
+
+<script>
+const fileInput   = document.getElementById('fileInput');
+const uploadZone  = document.getElementById('uploadZone');
+const previewImg  = document.getElementById('previewImg');
+const uploadOverlay = document.getElementById('uploadOverlay');
+const analyzeBtn  = document.getElementById('analyzeBtn');
+const loadingCard = document.getElementById('loadingCard');
+const loadingText = document.getElementById('loadingText');
+const errorCard   = document.getElementById('errorCard');
+const resultSection = document.getElementById('resultSection');
+const emptyTips   = document.getElementById('emptyTips');
+const retakeBtn   = document.getElementById('retakeBtn');
+const shareBtn    = document.getElementById('shareBtn');
+
+let imageBase64 = null;
+
+const loadingMessages = [
+  "Identificant el teu menjar…",
+  "Estimant la mida de la porció…",
+  "Calculant els macronutrients…",
+  "Buscant vitamines i minerals…",
+  "Generant consells de salut…"
+];
+let loadingInterval;
+
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const dataUrl = ev.target.result;
+    imageBase64 = dataUrl.split(',')[1];
+    previewImg.src = dataUrl;
+    previewImg.style.display = 'block';
+    uploadZone.classList.add('has-image');
+    uploadOverlay.innerHTML = `
+      <div class="upload-icon">✓</div>
+      <div class="upload-hint">Foto a punt</div>
+      <div class="upload-sub">Toca per canviar-la</div>
+    `;
+    analyzeBtn.disabled = false;
+  };
+  reader.readAsDataURL(file);
+});
+
+analyzeBtn.addEventListener('click', analyze);
+
+async function analyze() {
+  if (!imageBase64) return;
+
+  resultSection.classList.remove('show');
+  errorCard.classList.remove('show');
+  loadingCard.classList.add('show');
+  analyzeBtn.disabled = true;
+  emptyTips.style.display = 'none';
+
+  let i = 0;
+  loadingText.textContent = loadingMessages[0];
+  loadingInterval = setInterval(() => {
+    i = (i + 1) % loadingMessages.length;
+    loadingText.textContent = loadingMessages[i];
+  }, 1800);
+
+  const prompt = `You are an expert nutritionist and food scientist. Analyze this food photo and return ONLY a valid JSON object (no markdown, no backticks, no extra text).
+
+Return this exact structure:
+{
+  "food_name": "Name of the food/dish in Catalan",
+  "portion_estimate": "e.g. 1 tassa (240ml) o 1 bol mitjà",
+  "confidence": "Alta / Mitjana / Baixa",
+  "calories": 320,
+  "protein_g": 12.5,
+  "carbs_g": 45.2,
+  "fat_g": 8.1,
+  "fiber_g": 3.4,
+  "sugar_g": 10.2,
+  "saturated_fat_g": 2.1,
+  "sodium_mg": 420,
+  "cholesterol_mg": 45,
+  "calcium_mg": 120,
+  "iron_mg": 2.4,
+  "potassium_mg": 380,
+  "vitamin_c_mg": 15,
+  "vitamin_a_iu": 450,
+  "health_score": 72,
+  "health_score_label": "Bo",
+  "health_notes": [
+    {"type": "positive", "text": "Alt en proteïnes, ajuda a la recuperació muscular"},
+    {"type": "neutral",  "text": "Contingut moderat d'hidrats de carboni"},
+    {"type": "caution",  "text": "Vigila el sodi si segueixes una dieta baixa en sal"}
+  ]
+}
+
+If you cannot clearly identify food in the image, return:
+{"error": "No s'ha detectat menjar en aquesta imatge"}
+
+Be realistic with estimates. Base values on standard portion sizes visible in the image. All text fields must be in Catalan.`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: { type: "base64", media_type: "image/jpeg", data: imageBase64 }
+            },
+            { type: "text", text: prompt }
+          ]
+        }]
+      })
+    });
+
+    clearInterval(loadingInterval);
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error?.message || `Error d'API ${response.status}`);
+    }
+
+    const data = await response.json();
+    const rawText = data.content.map(b => b.text || '').join('');
+    const clean = rawText.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(clean);
+
+    loadingCard.classList.remove('show');
+
+    if (result.error) {
+      showError("🔍 " + result.error + "\n\nProva amb una foto més clara del menjar.");
+      return;
+    }
+
+    renderResult(result);
+
+  } catch (err) {
+    clearInterval(loadingInterval);
+    loadingCard.classList.remove('show');
+    showError("Alguna cosa ha fallat: " + err.message);
+    analyzeBtn.disabled = false;
+  }
+}
+
+function renderResult(r) {
+  document.getElementById('foodName').textContent = r.food_name;
+  document.getElementById('foodPortion').textContent = r.portion_estimate;
+  document.getElementById('confidencePill').textContent = r.confidence + ' confiança';
+
+  document.getElementById('kcalNum').textContent = Math.round(r.calories);
+  const maxKcal = 800;
+  const pct = Math.min(r.calories / maxKcal, 1);
+  const circumference = 251.2;
+  setTimeout(() => {
+    document.getElementById('calRing').style.strokeDashoffset =
+      circumference * (1 - pct);
+  }, 100);
+
+  const maxP = 60, maxC = 150, maxF = 60, maxFib = 30;
+  document.getElementById('proteinVal').textContent = r.protein_g + 'g';
+  document.getElementById('carbsVal').textContent   = r.carbs_g + 'g';
+  document.getElementById('fatVal').textContent     = r.fat_g + 'g';
+  document.getElementById('fiberVal').textContent   = r.fiber_g + 'g';
+  setTimeout(() => {
+    document.getElementById('proteinBar').style.width = Math.min(r.protein_g/maxP*100,100) + '%';
+    document.getElementById('carbsBar').style.width   = Math.min(r.carbs_g/maxC*100,100) + '%';
+    document.getElementById('fatBar').style.width     = Math.min(r.fat_g/maxF*100,100) + '%';
+    document.getElementById('fiberBar').style.width   = Math.min(r.fiber_g/maxFib*100,100) + '%';
+  }, 200);
+
+  const nutrients = [
+    { label: 'Sucre',            val: r.sugar_g,         unit: 'g',  dv: Math.round(r.sugar_g/50*100) },
+    { label: 'Greix saturat',    val: r.saturated_fat_g, unit: 'g',  dv: Math.round(r.saturated_fat_g/20*100) },
+    { label: 'Sodi',             val: r.sodium_mg,        unit: 'mg', dv: Math.round(r.sodium_mg/2300*100) },
+    { label: 'Colesterol',       val: r.cholesterol_mg,   unit: 'mg', dv: Math.round(r.cholesterol_mg/300*100) },
+    { label: 'Calci',            val: r.calcium_mg,       unit: 'mg', dv: Math.round(r.calcium_mg/1300*100) },
+    { label: 'Ferro',            val: r.iron_mg,          unit: 'mg', dv: Math.round(r.iron_mg/18*100) },
+    { label: 'Potassi',          val: r.potassium_mg,     unit: 'mg', dv: Math.round(r.potassium_mg/4700*100) },
+    { label: 'Vitamina C',       val: r.vitamin_c_mg,     unit: 'mg', dv: Math.round(r.vitamin_c_mg/90*100) },
+  ];
+
+  const grid = document.getElementById('nutrientGrid');
+  grid.innerHTML = nutrients.map(n => `
+    <div class="nutrient-tile">
+      <div class="nutrient-tile-label">${n.label}</div>
+      <div class="nutrient-tile-val">${n.val}<span class="nutrient-tile-unit">${n.unit}</span></div>
+      <div class="nutrient-tile-dv"><span>${n.dv}%</span> valor diari</div>
+    </div>
+  `).join('');
+
+  const score = r.health_score;
+  const scoreColor = score >= 75 ? 'var(--accent)' : score >= 50 ? 'var(--warn)' : '#f08080';
+  document.getElementById('healthScoreNum').textContent = score;
+  document.getElementById('healthScoreNum').style.color = scoreColor;
+  document.getElementById('healthScoreLabel').textContent = r.health_score_label;
+  const fill = document.getElementById('healthFill');
+  fill.style.background = scoreColor;
+  setTimeout(() => { fill.style.width = score + '%'; }, 300);
+
+  const notesContainer = document.getElementById('healthNotes');
+  notesContainer.innerHTML = (r.health_notes || []).map(n => {
+    const color = n.type === 'positive' ? 'var(--accent)' : n.type === 'caution' ? 'var(--warn)' : 'var(--muted)';
+    return `<div class="health-note">
+      <div class="note-dot" style="background:${color}"></div>
+      <span>${n.text}</span>
+    </div>`;
+  }).join('');
+
+  resultSection.classList.add('show');
+  retakeBtn.style.display = 'flex';
+  shareBtn.style.display = 'flex';
+
+  setTimeout(() => {
+    document.getElementById('main-scroll').scrollTo({ top: 300, behavior: 'smooth' });
+  }, 100);
+}
+
+function showError(msg) {
+  errorCard.textContent = msg;
+  errorCard.classList.add('show');
+  analyzeBtn.disabled = false;
+}
+
+function retake() {
+  fileInput.value = '';
+  imageBase64 = null;
+  previewImg.style.display = 'none';
+  uploadZone.classList.remove('has-image');
+  uploadOverlay.innerHTML = `
+    <div class="upload-icon">📷</div>
+    <div class="upload-hint">Fes o puja una foto</div>
+    <div class="upload-sub">Fotografia el teu àpat per analitzar-lo</div>
+  `;
+  analyzeBtn.disabled = true;
+  resultSection.classList.remove('show');
+  errorCard.classList.remove('show');
+  emptyTips.style.display = 'flex';
+  retakeBtn.style.display = 'none';
+  shareBtn.style.display = 'none';
+  document.getElementById('main-scroll').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function shareResult() {
+  const name = document.getElementById('foodName').textContent;
+  const kcal = document.getElementById('kcalNum').textContent;
+  const text = `🍽️ ${name} — ${kcal} kcal\nAnalitzat amb NutriSnap`;
+  if (navigator.share) {
+    navigator.share({ title: 'NutriSnap', text });
+  } else {
+    navigator.clipboard.writeText(text).then(() => alert('Copiat al porta-retalls!'));
+  }
+}
+</script>
+</body>
+</html>
