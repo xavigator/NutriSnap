@@ -9,6 +9,12 @@
 <meta name="theme-color" content="#0a0a0a">
 <link rel="apple-touch-icon" href="icon.png">
 <title>NutriSnap — Analitzador Nutricional</title>
+<script>
+if (window.navigator.standalone === true) {
+  document.documentElement.style.setProperty('--safe-top', '59px');
+  document.documentElement.style.setProperty('--safe-bottom', '34px');
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -996,31 +1002,7 @@ async function clearAllData() {
 // Init
 document.getElementById('dailyDate').textContent = new Date().toLocaleDateString('ca',{weekday:'long',day:'numeric',month:'long'});
 
-// PWA SAFE AREA FIX
-(function() {
-  const isPWA = window.navigator.standalone === true;
-  if (!isPWA) return;
-  // Read the real safe area from a test element
-  const probe = document.createElement('div');
-  probe.style.cssText = 'position:fixed;top:env(safe-area-inset-top,0px);height:0;width:0;visibility:hidden';
-  document.body.appendChild(probe);
-  const realTop = parseInt(getComputedStyle(probe).top) || 0;
-  document.body.removeChild(probe);
-  // Use real value if non-zero, otherwise fall back to model detection
-  let top = realTop > 0 ? realTop : 0;
-  if (top < 10) {
-    const h = window.screen.height;
-    if (h >= 956) top = 59;       // iPhone 16 Pro Max
-    else if (h >= 932) top = 59;  // iPhone 15 Pro Max
-    else if (h >= 874) top = 59;  // iPhone 16 Pro
-    else if (h >= 852) top = 59;  // iPhone 15 Pro
-    else if (h >= 844) top = 47;  // iPhone 12/13/14
-    else if (h >= 812) top = 44;  // iPhone X/XS/11 Pro
-    else top = 20;
-  }
-  document.documentElement.style.setProperty('--safe-top', top + 'px');
-  document.documentElement.style.setProperty('--safe-bottom', '34px');
-})();
+
 </script>
 </body>
 </html>
