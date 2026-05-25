@@ -318,6 +318,7 @@ select.field-input{cursor:pointer}
       <div class="sec-label">Àpats d'avui</div>
       <div class="meal-list" id="mealList"></div>
 
+      <div id="debugPanel" style="display:none;background:#1a0a0a;border:1px solid #f08080;border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px;color:#f08080;word-break:break-all;line-height:1.5"></div>
       <div class="sec-label" style="margin-top:24px">Afegir manualment</div>
       <div class="search-bar">
         <span>🔍</span>
@@ -519,8 +520,13 @@ async function deleteAllData() {
   localStorage.removeItem('ns_profile');
 }
 
-function todayKey() { return new Date().toISOString().slice(0,10); }
-function dateKey(date) { return date.toISOString().slice(0,10); }
+function todayKey() {
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function dateKey(date) {
+  return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
+}
 
 async function getTodayMeals() {
   const today = todayKey();
@@ -1010,13 +1016,16 @@ async function addManualMeal(idx, query) {
     time: new Date().toLocaleTimeString('ca',{hour:'2-digit',minute:'2-digit'}),
     name: f.name, calories: f.cal, protein_g: f.p, carbs_g: f.c, fat_g: f.f, imageBase64: null
   };
+  const dbg = document.getElementById('debugPanel');
   try {
+    dbg.style.display = 'none';
     await saveMeal(meal);
     document.getElementById('searchInput').value = '';
     document.getElementById('searchResults').innerHTML = '';
     renderDaily();
   } catch(e) {
-    alert('Error desant: ' + e.message);
+    dbg.style.display = 'block';
+    dbg.textContent = 'Error: ' + e.message;
   }
 }
 
